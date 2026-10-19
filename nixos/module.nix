@@ -158,9 +158,16 @@ in
         # Needed for some (?) BluRay drives
         wants = [ "modprobe@sg.service" ];
         after = [ "modprobe@sg.service" ];
-        path = [
-          pkgs.makemkv
-        ];
+        path =
+          [
+            # Poster ripping for rips without a disc.
+            pkgs.ffmpeg-headless
+            pkgs.makemkv
+            # Music CD ripping and encoding; abcde is not on the package
+            # wrapper's PATH, so it must come from the unit.
+            pkgs.abcde
+          ]
+          ++ lib.optionals cfg.enableTranscoding [ cfg.handbrakePackage ];
         environment = {
           inherit ARM_CONFIG_FILE;
         };
