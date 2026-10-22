@@ -172,7 +172,22 @@ def setup():
     arm_log = logger.create_early_logger(syslog=args.syslog)
     # Make sure all directories are fully setup
     utils.arm_setup(arm_log)
-    drive = SystemDrives.query.filter_by(mount=devpath).one()  # unique mounts
+    # `SystemDrives` rows are written by the UI's drive scan (`DriveUtils
+    # .drives_update`), which runs at armui startup only. A drive that is
+    # attached (or wakes up) after armui started - e.g. a USB drive behind
+    # a hub - has no row with its mount yet, and a previous scan may have
+    # blanked the row's mount when the drive was stale. Scan once and
+    # retry instead of failing the whole job with a NoResultFound.
+    drive = SystemDrives.query.filter_by(mount=devpath).first()  # unique mounts
+    if drive is None:
+        logging.info(
+            f"No SystemDrives row for '{devpath}'. "
+            "Scanning drives and retrying before failing the job."
+        )
+        drive_utils.drives_update()
+        drive = SystemDrives.query.filter_by(mount=devpath).first()
+    if drive is None:
+        raise utils.RipperException(f"No drive found in database for '{devpath}'.")
 
     # With some drives and some disks, there is a race condition between creating the Job()
     # below and the drive being ready, so give it a chance to get ready (observed with LG SP80NB80)
