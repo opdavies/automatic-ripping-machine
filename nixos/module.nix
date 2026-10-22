@@ -164,8 +164,11 @@ in
             # replaced by setting `path', so the setuid `mount' must be
             # listed again: the ripper mounts the disc for identification
             # (`mount --source /dev/sr0' against an fstab entry), and the
-            # store util-linux `mount' is not setuid.
-            "/run/wrappers/bin"
+            # store util-linux `mount' is not setuid. The unit's PATH is
+            # built with makeBinPath, which appends `/bin' to every
+            # entry, string or derivation: list `/run/wrappers' so the
+            # result is the wrappers directory itself.
+            "/run/wrappers"
             # Poster ripping for rips without a disc.
             pkgs.ffmpeg-headless
             pkgs.makemkv
