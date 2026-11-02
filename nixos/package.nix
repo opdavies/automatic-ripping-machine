@@ -42,21 +42,27 @@ python3Packages.buildPythonApplication {
       > $out/lib/udev/rules.d/50-automatic-ripping-machine.rules
   '';
 
-  # Provide runtime dependencies by injecting them into PATH via the python wrapper
+  # Provide runtime dependencies by injecting them into PATH via the python wrapper.
+  # Each flag must be its own list element: the wrap-python hook passes
+  # makeWrapperArgs element-wise to wrapProgram, and the shell-based
+  # makeShellWrapper rejects "--prefix PATH : …" arriving as a single
+  # argument (word-splitting relied on the pre-structured-attrs string
+  # branch and no longer happens).
   makeWrapperArgs = [
-    "--prefix PATH : ${
-      lib.makeBinPath [
-        # These will be provided dynamically by the module depending on the configuration
-        # abcde
-        # ffmpeg-headless # Only required for ripping posters
-        # handbrake
-        bash
-        curl
-        eject
-        lsdvd
-        util-linux # mount, umount, findmnt
-      ]
-    }"
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [
+      # These will be provided dynamically by the module depending on the configuration
+      # abcde
+      # ffmpeg-headless # Only required for ripping posters
+      # handbrake
+      bash
+      curl
+      eject
+      lsdvd
+      util-linux # mount, umount, findmnt
+    ])
   ];
 
   dependencies = with python3Packages; [
